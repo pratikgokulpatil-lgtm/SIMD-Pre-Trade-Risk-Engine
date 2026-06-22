@@ -24,8 +24,8 @@ Microprofiling metrics collected using the Google Benchmark harness compiled on 
 
 | Optimization Strategy | Average Execution Latency | Performance Delta |
 | :--- | :--- | :--- |
-| Standard Naive Scalar Loop | `1.92 ns` | Baseline |
-| **Branchless AVX2 SIMD Engine** | **`0.34 ns`** | **~5.6x Acceleration** |
+| Standard Naive Scalar Loop | `7.43 ns` | Baseline |
+| **Branchless AVX2 SIMD Engine** | **`0.673 ns`** | **~11x Acceleration** |
 
 *Note: The AVX2 approach provides deterministic execution time regardless of market volatility, guaranteeing a predictable latency profile on hot path validations.*
 
