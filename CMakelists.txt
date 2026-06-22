@@ -1,0 +1,49 @@
+cmake_minimum_required(VERSION 3.14)
+project(SIMDRiskEngine CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# Core library interface
+add_library(risk_engine INTERFACE)
+target_include_directories(risk_engine INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Primary application executable
+add_executable(risk_app src/main.cpp)
+target_link_libraries(risk_app PRIVATE risk_engine)
+
+# Apply low-latency optimization flags strictly to first-party targets
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(risk_app PRIVATE -O3 -mavx2 -mfma -Wall -Wextra -Werror -pedantic)
+endif()
+
+# Automatically fetch, build, and isolate Google Benchmark
+include(FetchContent)
+FetchContent_Declare(
+    googlebenchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG        v1.8.3
+)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googlebenchmark)
+
+# CRITICAL OVERRIDE: Suppress warnings-as-errors explicitly for Google Benchmark targets
+if(TARGET benchmark)
+    if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(benchmark PRIVATE -Wno-error)
+    endif()
+endif()
+
+# Performance microprofiling executable
+add_executable(risk_bench benchmarks/risk_benchmark.cpp)
+target_link_libraries(risk_bench PRIVATE risk_engine benchmark::benchmark)
+
+# Apply low-latency optimization flags strictly to the benchmark target
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(risk_bench PRIVATE -O3 -mavx2 -mfma -Wall -Wextra -Werror -pedantic)
+endif()
